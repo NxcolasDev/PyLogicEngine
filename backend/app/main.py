@@ -5,7 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.routers import analytics, auth
+from app.routers import analytics, auth, learning
 
 app = FastAPI(
     title="PyLogic Engine API",
@@ -14,6 +14,7 @@ app = FastAPI(
 )
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
+app.include_router(learning.router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])

@@ -1,5 +1,4 @@
 # tests/test_challenge.py
-import pytest
 from src.domain.challenge import AnalyticsEngine
 
 

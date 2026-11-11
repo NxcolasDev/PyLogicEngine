@@ -1,4 +1,4 @@
-"""Handlers tipados; decoradores registram rotas e Depends injeta sessões/formulários."""
+"""Typed route handlers; decorators register routes and Depends injects inputs."""
 
 from typing import Annotated
 
@@ -39,16 +39,20 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
 def register(
     payload: RegisterRequest,
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
-    """Handler decorado; valida entrada tipada, persiste conta e trata email duplicado."""
+    """Valida entrada, persiste conta e trata email duplicado."""
 
     normalized_email = str(payload.email).lower()
     if db.scalar(select(User.id).where(User.email == normalized_email)) is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email já cadastrado.")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Email já cadastrado."
+        )
 
     user = User(email=normalized_email, hashed_password=hash_password(payload.password))
     db.add(user)
@@ -69,7 +73,7 @@ def login(
     form: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
-    """Handler decorado; injeta formulário/sessão tipados, verifica senha e emite JWT."""
+    """Verifica credenciais do formulário e emite JWT."""
 
     user = db.scalar(select(User).where(User.email == form.username.lower()))
     if user is None or not verify_password(form.password, user.hashed_password):

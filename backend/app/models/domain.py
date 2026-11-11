@@ -26,12 +26,12 @@ class Event(Base):
     """Modelo OO do evento; índices aceleram filtros severity/data e agregações."""
 
     __tablename__ = "events"
-    __table_args__ = (
-        Index("ix_events_user_created_at", "user_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_events_user_created_at", "user_id", "created_at"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     severity: Mapped[str] = mapped_column(String(20), index=True)
     message: Mapped[str] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(

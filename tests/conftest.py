@@ -1,4 +1,4 @@
-"""Fixture pytest decorada e tipada; SQLite em memória isola testes sem serviços externos."""
+"""Fixture pytest typed; SQLite in-memory isolates tests from external services."""
 
 import os
 import secrets
@@ -13,8 +13,8 @@ from sqlalchemy.pool import StaticPool
 os.environ.setdefault("JWT_SECRET_KEY", secrets.token_urlsafe(48))
 os.environ.setdefault("SQS_QUEUE_URL", "")
 
-from app.database import Base, get_db
-from app.main import app
+from app.database import Base, get_db  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture

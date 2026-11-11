@@ -20,7 +20,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 def _jwt_secret() -> str:
-    """Valida segredo externo com retorno tipado antes de assinar ou verificar tokens."""
+    """Valida o segredo externo antes de assinar ou verificar tokens."""
 
     configured_secret = get_settings().jwt_secret_key
     if configured_secret is None or len(configured_secret.get_secret_value()) < 32:
@@ -46,7 +46,9 @@ def create_access_token(subject: str) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(
         minutes=get_settings().jwt_access_token_expire_minutes
     )
-    return jwt.encode({"sub": subject, "exp": expires_at}, _jwt_secret(), algorithm=ALGORITHM)
+    return jwt.encode(
+        {"sub": subject, "exp": expires_at}, _jwt_secret(), algorithm=ALGORITHM
+    )
 
 
 def _unauthorized() -> HTTPException:
@@ -66,7 +68,9 @@ def get_current_user(
     """Valida JWT e resolve o usuário; Annotated/Depends aplicam injeção tipada."""
 
     try:
-        payload: dict[str, Any] = jwt.decode(token, _jwt_secret(), algorithms=[ALGORITHM])
+        payload: dict[str, Any] = jwt.decode(
+            token, _jwt_secret(), algorithms=[ALGORITHM]
+        )
         subject = payload.get("sub")
         if not isinstance(subject, str):
             raise _unauthorized()

@@ -13,11 +13,13 @@ def show_banner() -> None:
 
 def run_scores_demo() -> None:
     print("\n--- [1] Teste de Média Móvel (Rolling Average) ---")
-    raw_input = input("Digite uma lista de pontuações separadas por vírgula (ex: 10,20,30,40): ")
+    raw_input = input(
+        "Digite uma lista de pontuações separadas por vírgula (ex: 10,20,30,40): "
+    )
     try:
         scores = [float(x.strip()) for x in raw_input.split(",") if x.strip()]
         window = int(input("Digite o tamanho da janela (window_size): "))
-        
+
         result = AnalyticsEngine.calculate_rolling_average(scores, window)
         print(f"\n[Resultado] Médias Móveis: {result}")
     except ValueError:
@@ -44,9 +46,9 @@ def main() -> None:
         print("1. Executar Média Móvel")
         print("2. Simular Varredura de Logs Críticos")
         print("3. Sair")
-        
+
         choice = input("\nEscolha uma opção (1-3): ").strip()
-        
+
         if choice == "1":
             run_scores_demo()
         elif choice == "2":

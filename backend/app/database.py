@@ -1,4 +1,4 @@
-"""Engine SQLAlchemy com classes OO, type hints e dependência geradora por requisição."""
+"""SQLAlchemy engine and typed session dependency for FastAPI."""
 
 from collections.abc import Generator
 

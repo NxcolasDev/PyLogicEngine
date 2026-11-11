@@ -3,6 +3,8 @@
 from fastapi.testclient import TestClient
 
 from app.services.engine import count_by_severity
+from app.services.assistant import get_assistant_provider
+from src.domain.curriculum import LearningTrack, lessons_for_track
 
 
 def register(client: TestClient, email: str) -> None:
@@ -26,7 +28,9 @@ def login(client: TestClient, email: str) -> str:
     return response.json()["access_token"]
 
 
-def test_analytics_events_are_authenticated_and_scoped_to_user(client: TestClient) -> None:
+def test_analytics_events_are_authenticated_and_scoped_to_user(
+    client: TestClient,
+) -> None:
     """Garante autenticação obrigatória e que usuários não leem eventos alheios."""
 
     unauthenticated = client.get("/api/v1/analytics/events")
@@ -56,7 +60,9 @@ def test_analytics_events_are_authenticated_and_scoped_to_user(client: TestClien
     }
 
 
-def test_registration_rejects_duplicate_email_and_short_password(client: TestClient) -> None:
+def test_registration_rejects_duplicate_email_and_short_password(
+    client: TestClient,
+) -> None:
     """Valida restrições de senha e conflito de email na borda HTTP."""
 
     register(client, "duplicate@example.com")
@@ -77,3 +83,37 @@ def test_count_by_severity_aggregates_without_losing_repeated_values() -> None:
     """Confirma o contrato da função pura que agrega severidades."""
 
     assert count_by_severity(["ERROR", "INFO", "ERROR"]) == {"ERROR": 2, "INFO": 1}
+
+
+def test_learning_curriculum_is_ordered_and_pure() -> None:
+    """Confirma que a trilha Python retorna níveis ascendentes sem mutação global."""
+
+    lessons = lessons_for_track(LearningTrack.PYTHON)
+    assert [lesson.level for lesson in lessons] == [1, 2, 3]
+    assert lessons_for_track(LearningTrack.CLOUD)[0].title == "Fundamentos de cloud"
+
+
+def test_assistant_route_requires_authentication_and_uses_injected_provider(
+    client: TestClient,
+) -> None:
+    """Testa o adapter desacoplado sem chamadas de rede ou credenciais de fornecedor."""
+
+    class FakeAssistant:
+        async def answer(self, prompt: str) -> str:
+            return f"Resposta: {prompt}"
+
+    client.app.dependency_overrides[get_assistant_provider] = lambda: FakeAssistant()
+    anonymous = client.post(
+        "/api/v1/learning/assistant", json={"prompt": "O que é Python?"}
+    )
+    assert anonymous.status_code == 401
+
+    register(client, "learner@example.com")
+    token = login(client, "learner@example.com")
+    response = client.post(
+        "/api/v1/learning/assistant",
+        json={"prompt": "  O que é Python?  "},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"answer": "Resposta: O que é Python?"}

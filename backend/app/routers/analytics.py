@@ -51,13 +51,15 @@ class AnalyticsSummary(BaseModel):
     by_severity: list[SeverityCount]
 
 
-@router.post("/events", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/events", response_model=EventResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_event(
     payload: EventCreate,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Event:
-    """Handler async: persiste fora do loop e usa await para publicação não bloqueante."""
+    """Persiste fora do loop e usa await para publicar telemetria sem bloqueio."""
 
     event = await run_in_threadpool(
         record_event,
@@ -86,7 +88,7 @@ def list_events(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[Event]:
-    """Handler tipado; filtros SQL aproveitam índices de severidade/data para consulta."""
+    """Filtros SQL aproveitam índices de severidade/data para reduzir a busca."""
 
     if created_after and created_before and created_after > created_before:
         raise HTTPException(
@@ -110,7 +112,7 @@ def summarize_events(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> AnalyticsSummary:
-    """Agrega com JOIN e COUNT/GROUP BY; tipos e Depends delimitam o escopo autenticado."""
+    """JOIN e COUNT/GROUP BY agregam dados limitados ao usuário autenticado."""
 
     grouped = db.execute(
         select(Event.severity, func.count(Event.id))
@@ -122,5 +124,7 @@ def summarize_events(
     total = sum(count for _, count in grouped)
     return AnalyticsSummary(
         total_events=total,
-        by_severity=[SeverityCount(severity=severity, count=count) for severity, count in grouped],
+        by_severity=[
+            SeverityCount(severity=severity, count=count) for severity, count in grouped
+        ],
     )
